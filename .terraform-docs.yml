@@ -10,3 +10,4 @@ settings:
   default: true
   hide-empty: true
   lockfile: false
+  html: false
