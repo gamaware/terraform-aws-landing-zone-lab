@@ -52,7 +52,9 @@ export TF_DATA_DIR="$WORK_DIR/.terraform"
 
 leftovers() {
   # Regional resources from this run, found by the run tag. KMS keys cannot be
-  # deleted at once; a key in PendingDeletion counts as cleaned up.
+  # deleted at once; a key in PendingDeletion counts as cleaned up. The tagging
+  # API keeps listing deleted security groups and flow logs for a long time,
+  # so those are confirmed against EC2 before they count as leftovers.
   local arn state
   aws resourcegroupstaggingapi get-resources --profile "$PROFILE" --region "$REGION" \
     --tag-filters "Key=$TAG_KEY,Values=$TAG_VALUE" "Key=run,Values=$SUFFIX" \
@@ -62,6 +64,15 @@ leftovers() {
       state="$(aws kms describe-key --profile "$PROFILE" --region "$REGION" --key-id "$arn" \
         --query 'KeyMetadata.KeyState' --output text 2>/dev/null || echo Unknown)"
       [[ "$state" == "PendingDeletion" ]] && continue
+    fi
+    if [[ "$arn" == arn:aws:ec2:*:security-group/* ]]; then
+      aws ec2 describe-security-groups --profile "$PROFILE" --region "$REGION" \
+        --group-ids "${arn##*/}" >/dev/null 2>&1 || continue
+    fi
+    if [[ "$arn" == arn:aws:ec2:*:vpc-flow-log/* ]]; then
+      state="$(aws ec2 describe-flow-logs --profile "$PROFILE" --region "$REGION" \
+        --flow-log-ids "${arn##*/}" --query 'length(FlowLogs)' --output text)"
+      [[ "$state" == "0" ]] && continue
     fi
     echo "$arn"
   done
@@ -109,6 +120,7 @@ terraform -chdir="$LIVE_DIR" init -input=false -backend-config="path=$WORK_DIR/t
 terraform -chdir="$LIVE_DIR" apply -auto-approve -input=false "${TF_ARGS[@]}"
 
 BUCKET="$(terraform -chdir="$LIVE_DIR" output -raw log_bucket_name)"
+ACCESS_BUCKET="$BUCKET-access"
 VPC_ID="$(terraform -chdir="$LIVE_DIR" output -raw vpc_id)"
 
 fail() {
@@ -125,20 +137,27 @@ PAB="$(aws s3api get-public-access-block --profile "$PROFILE" --bucket "$BUCKET"
   --query 'PublicAccessBlockConfiguration.[BlockPublicAcls,BlockPublicPolicy,IgnorePublicAcls,RestrictPublicBuckets]' --output text)"
 [[ "$PAB" == $'True\tTrue\tTrue\tTrue' ]] || fail "public access block is '$PAB'"
 
+# AWS CLI v2 rejects /dev/null as a blob body; it needs a regular file.
+PROBE_FILE="$WORK_DIR/probe.txt"
+: >"$PROBE_FILE"
+
 # Control: a write over HTTPS works. Probe: the same write over plain HTTP is
-# refused by the bucket policy with AccessDenied, not by some other error.
-aws s3api put-object --profile "$PROFILE" --bucket "$BUCKET" --key probe-https.txt --body /dev/null >/dev/null \
-  || fail "HTTPS write to the log bucket failed; the probe below would prove nothing"
-if HTTP_ERR="$(aws s3api put-object --profile "$PROFILE" --bucket "$BUCKET" --key probe-http.txt --body /dev/null \
+# refused by the bucket policy with AccessDenied, not by some other error. The
+# probe targets the SSE-S3 access-log bucket, which gets the same TLS-only
+# statement from secure-bucket: S3 rejects any plain-HTTP write to a bucket
+# with KMS default encryption before the bucket policy is evaluated.
+aws s3api put-object --profile "$PROFILE" --bucket "$ACCESS_BUCKET" --key probe-https.txt --body "$PROBE_FILE" >/dev/null \
+  || fail "HTTPS write to the access-log bucket failed; the probe below would prove nothing"
+if HTTP_ERR="$(aws s3api put-object --profile "$PROFILE" --bucket "$ACCESS_BUCKET" --key probe-http.txt --body "$PROBE_FILE" \
   --endpoint-url "http://s3.$REGION.amazonaws.com" 2>&1 >/dev/null)"; then
-  fail "plain HTTP write to the log bucket succeeded; the TLS-only policy is not enforced"
+  fail "plain HTTP write to the access-log bucket succeeded; the TLS-only policy is not enforced"
 fi
 [[ "$HTTP_ERR" == *AccessDenied* ]] || fail "plain HTTP write failed for another reason: $HTTP_ERR"
 
 RULES="$(aws ec2 describe-security-groups --profile "$PROFILE" --region "$REGION" \
   --filters "Name=vpc-id,Values=$VPC_ID" "Name=group-name,Values=default" \
-  --query 'length(SecurityGroups[0].IpPermissions) + length(SecurityGroups[0].IpPermissionsEgress)' --output text)"
-[[ "$RULES" == "0" ]] || fail "default security group has $RULES rules"
+  --query '[length(SecurityGroups[0].IpPermissions), length(SecurityGroups[0].IpPermissionsEgress)]' --output text)"
+[[ "$RULES" == $'0\t0' ]] || fail "default security group has ingress/egress rule counts '$RULES', expected none"
 
 SUB="$(aws iam get-role --profile "$PROFILE" --role-name "$NAME" \
   --query 'Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals."token.actions.githubusercontent.com:sub"' --output text)"
