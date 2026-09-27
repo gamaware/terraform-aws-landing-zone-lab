@@ -27,8 +27,8 @@ here has been deployed to a real organization.
 - Each root has a unique backend key `<account>/<region>/<stack>/terraform.tfstate`.
 - Module behaviour changes need a `terraform test` assertion; SCP changes need a case in `tests/policies/test_scps.py`.
 - Checkov skips sit next to the resource with a reason. No global skips in `.checkov.yaml`.
-- Never run `make test-live` unless the user asks. It needs `CONFIRM_LIVE=yes`, uses the `dev` profile, and must be
-  preceded by `aws sts get-caller-identity --profile dev`.
+- Never run `make test-live` unless the user asks. It needs `CONFIRM_LIVE=yes` and `LIVE_ACCOUNT_ID`, uses the `dev`
+  profile, and must be preceded by `aws sts get-caller-identity --profile dev`.
 - Lock files: committed for `bootstrap/` and `environments/`, generated with
   `terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64`.
 
@@ -43,8 +43,9 @@ Feature branches only, conventional commits, squash merge. No AI attribution any
 
 ## CI
 
-`.github/workflows/ci.yml` calls the shared reusable workflows in `gamaware/.github` (lint-docs, lint-actions, secrets,
-security, terraform) and runs `make verify` in its own job. PR jobs never get AWS credentials or `id-token`.
+`.github/workflows/ci.yml` calls the shared reusable workflows in `gamaware/.github`, pinned by SHA (lint-docs,
+lint-actions, secrets, security, terraform), and runs `make verify` in its own job. PR jobs never get AWS credentials
+or `id-token`.
 
 ## Code review
 

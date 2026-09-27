@@ -40,3 +40,8 @@ styles/
 .DS_Store
 .idea/
 .vscode/
+
+# Local agent tooling state
+.claude-flow/
+.claude/proven-config*
+.claude/.proven-config-version

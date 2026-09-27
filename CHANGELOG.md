@@ -23,7 +23,7 @@ All notable changes to this project are documented in this file. The format foll
 - Opt-in `make test-live` for non-organization modules, guarded by `CONFIRM_LIVE=yes`.
 - Six ADRs, a deployment runbook and architecture diagrams.
 
-### Changed
+### Security
 
-- TODO: re-pin the `gamaware/.github` reusable workflows in `.github/workflows/ci.yml` from `@main` to a reviewed
-  commit SHA, then remove the `gamaware/*: ref-pin` exception from `zizmor.yml`.
+- Every action and shared `gamaware/.github` reusable workflow is pinned to a full commit SHA; `zizmor.yml` enforces
+  hash pins for all of them.

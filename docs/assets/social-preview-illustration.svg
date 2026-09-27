@@ -1,0 +1,19 @@
+<rect x="224" y="72" width="280" height="112"/>
+<text x="248" y="118" stroke="none" fill="#FFFFFF">management</text>
+<text x="248" y="152" stroke="none" fill="#FFFFFF" fill-opacity=".7">organization root</text>
+<path d="M364,184 V272 M128,272 H600 M128,272 V352 M364,272 V352 M600,272 V352"/>
+<circle cx="364" cy="272" r="6" fill="#FFFFFF"/>
+<rect x="238" y="220" width="252" height="40" rx="20" stroke="#FFC34D" stroke-width="3"/>
+<text x="364" y="246" text-anchor="middle" stroke="none" fill="#FFC34D">SCP guardrails</text>
+<rect x="48" y="352" width="160" height="96"/>
+<rect x="284" y="352" width="160" height="96"/>
+<rect x="520" y="352" width="160" height="96"/>
+<text x="64" y="392" stroke="none" fill="#FFFFFF">Security</text>
+<text x="300" y="392" stroke="none" fill="#FFFFFF">Infra</text>
+<text x="536" y="392" stroke="none" fill="#FFFFFF">Workloads</text>
+<text x="64" y="428" stroke="none" fill="#FFFFFF" fill-opacity=".7">logs · audit</text>
+<text x="300" y="428" stroke="none" fill="#FFFFFF" fill-opacity=".7">shared VPC</text>
+<text x="536" y="428" stroke="none" fill="#FFFFFF" fill-opacity=".7">OIDC role</text>
+<path d="M128,448 V520 M364,448 V520 M600,448 V520 M128,520 H600" stroke-opacity=".55"/>
+<rect x="238" y="536" width="252" height="56" rx="28"/>
+<text x="364" y="571" text-anchor="middle" stroke="none" fill="#FFFFFF">org trail → archive</text>
