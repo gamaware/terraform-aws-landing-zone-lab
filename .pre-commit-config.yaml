@@ -36,12 +36,21 @@ repos:
           - --hook-config=--add-to-existing-file=true
           - --hook-config=--create-file-if-not-exist=false
           - --args=--config=.terraform-docs.yml
-      - id: terraform_checkov
-        args:
-          - --args=--config-file __GIT_WORKING_DIR__/.checkov.yaml
 
   - repo: local
     hooks:
+      - id: checkov
+        name: Checkov 3.3.19
+        entry: make checkov
+        language: system
+        pass_filenames: false
+        files: \.(tf|json)$
+      - id: backend-key-test
+        name: backend key test
+        entry: python3 -m unittest discover -s tests/structure
+        language: system
+        pass_filenames: false
+        files: ^(environments/.*/versions\.tf|tests/structure/)
       - id: scp-policy-tests
         name: SCP policy tests
         entry: python3 -m unittest discover -s tests/policies

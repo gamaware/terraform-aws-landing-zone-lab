@@ -10,19 +10,20 @@ ROOTS    := bootstrap $(sort $(patsubst %/versions.tf,%,$(wildcard environments/
 MODULES  := $(sort $(patsubst %/versions.tf,%,$(wildcard modules/*/versions.tf)))
 EXAMPLES := $(sort $(patsubst %/versions.tf,%,$(wildcard modules/*/examples/*/versions.tf)))
 TFLINT_CONFIG := $(CURDIR)/.tflint.hcl
+CHECKOV_VERSION := 3.3.19
 
-.PHONY: help verify fmt init validate lint test policy-test checkov example-ids test-live clean
+.PHONY: help verify fmt init validate lint test policy-test structure-test checkov example-ids test-live clean
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
 
-verify: fmt validate lint test policy-test checkov example-ids ## Run every offline check
-	@echo "verify: all offline checks passed"
+verify: fmt validate lint test policy-test structure-test checkov example-ids ## Run every offline check
+	@echo "verify: all checks passed"
 
 fmt: ## Check Terraform formatting
 	terraform fmt -check -recursive -diff
 
-init: ## Initialise every root, module and example without a backend
+init: ## Initialize every root, module and example without a backend
 	@for dir in $(ROOTS) $(MODULES) $(EXAMPLES) tests/live; do \
 	  terraform -chdir="$$dir" init -backend=false -input=false -no-color >/dev/null || { echo "init failed: $$dir"; exit 1; }; \
 	done
@@ -50,8 +51,11 @@ test: ## Run terraform test (mocked provider) in every module
 policy-test: ## Validate SCP JSON and assert which requests each SCP denies
 	python3 -m unittest discover -s tests/policies -v
 
+structure-test: ## Assert each root's backend key matches its path and is unique
+	python3 -m unittest discover -s tests/structure -v
+
 checkov: ## Scan all Terraform with Checkov
-	checkov --config-file .checkov.yaml
+	uvx checkov==$(CHECKOV_VERSION) --config-file .checkov.yaml
 
 example-ids: ## Fail on any 12-digit ID that is not an AWS documentation example
 	scripts/check-example-ids.sh
