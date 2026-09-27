@@ -1,9 +1,5 @@
-# Shared reusable workflows from gamaware/.github are called by branch until
-# they are re-pinned to a commit SHA (see CHANGELOG, Unreleased). Every other
-# action must be pinned by hash.
 rules:
   unpinned-uses:
     config:
       policies:
-        gamaware/*: ref-pin
         "*": hash-pin
