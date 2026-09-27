@@ -9,7 +9,7 @@ variable "account_id" {
   type        = string
 }
 
-variable "deploy_role_name" {
+variable "management_access_role_name" {
   description = "Role assumed in the member account."
   type        = string
   default     = "OrganizationAccountAccessRole"

@@ -29,14 +29,14 @@ variable "trail_name" {
   default     = "organization-trail"
 }
 
-variable "deploy_role_name" {
+variable "management_access_role_name" {
   description = "Role that deploys this stack. It is the only principal allowed to delete log objects or change lifecycle rules."
   type        = string
   default     = "OrganizationAccountAccessRole"
 }
 
 variable "deny_object_deletion" {
-  description = "Deny object deletion and bucket policy, versioning and lifecycle changes to everyone except the deploy role. Only the live test turns this off."
+  description = "Deny object deletion and bucket policy, versioning and lifecycle changes to everyone except the management access role. Only the live test turns this off."
   type        = bool
   default     = true
 }

@@ -261,7 +261,7 @@ data "aws_iam_policy_document" "logs_write" {
       condition {
         test     = "ArnNotLike"
         variable = "aws:PrincipalArn"
-        values   = ["arn:${local.partition}:iam::${local.account_id}:role/${var.deploy_role_name}"]
+        values   = ["arn:${local.partition}:iam::${local.account_id}:role/${var.management_access_role_name}"]
       }
     }
   }

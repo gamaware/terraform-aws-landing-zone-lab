@@ -2,7 +2,7 @@
 
 Runs in the log-archive account. Creates the KMS key and the central bucket that receive the organization CloudTrail and
 every account's AWS Config delivery, plus the access-log bucket. Service writes are pinned to the management account's
-trail and to the organization ID; object deletion is denied to everyone except the deploy role.
+trail and to the organization ID; object deletion is denied to everyone except the management access role.
 
 Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/) (`terraform test`, mocked provider).
 
@@ -11,7 +11,7 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 
 | Name | Version |
 | ---- | ------- |
-| terraform | >= 1.10.0 |
+| terraform | >= 1.11.0, < 2.0.0 |
 | aws | >= 6.0, < 7.0 |
 
 ## Providers
@@ -48,13 +48,13 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 | management\_account\_id | Management account that owns the organization trail. | `string` | n/a | yes |
 | organization\_id | AWS Organizations ID, for example o-exampleorgid. Scopes AWS Config writes and auditor reads to the organization. | `string` | n/a | yes |
 | access\_log\_expiration\_days | Days S3 server access logs are kept. | `number` | `180` | no |
-| deny\_object\_deletion | Deny object deletion and bucket policy, versioning and lifecycle changes to everyone except the deploy role. Only the live test turns this off. | `bool` | `true` | no |
-| deploy\_role\_name | Role that deploys this stack. It is the only principal allowed to delete log objects or change lifecycle rules. | `string` | `"OrganizationAccountAccessRole"` | no |
+| deny\_object\_deletion | Deny object deletion and bucket policy, versioning and lifecycle changes to everyone except the management access role. Only the live test turns this off. | `bool` | `true` | no |
 | force\_destroy | Allow Terraform to delete non-empty buckets. Only the live test sets this to true. | `bool` | `false` | no |
 | glacier\_transition\_days | Days before log objects move to S3 Glacier Flexible Retrieval. | `number` | `90` | no |
 | kms\_deletion\_window\_days | Waiting period before a deleted log key is gone. Logs are unreadable without it, so keep the maximum outside tests. | `number` | `30` | no |
 | log\_expiration\_days | Days log objects are kept before they expire. | `number` | `400` | no |
 | log\_reader\_role\_arns | Role ARN patterns in the organization allowed to decrypt logs, for example the security account's audit role. | `list(string)` | `[]` | no |
+| management\_access\_role\_name | Role that deploys this stack. It is the only principal allowed to delete log objects or change lifecycle rules. | `string` | `"OrganizationAccountAccessRole"` | no |
 | tags | Tags applied to every resource. | `map(string)` | `{}` | no |
 | trail\_name | Name of the organization trail allowed to write to the bucket. | `string` | `"organization-trail"` | no |
 

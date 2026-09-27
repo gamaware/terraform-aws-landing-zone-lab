@@ -5,7 +5,7 @@ provider "aws" {
   # in the member account. allowed_account_ids stops a wrong role ARN
   # from ever applying to the wrong account.
   assume_role {
-    role_arn     = "arn:aws:iam::${var.account_id}:role/${var.deploy_role_name}"
+    role_arn     = "arn:aws:iam::${var.account_id}:role/${var.management_access_role_name}"
     session_name = "terraform-landing-zone"
   }
 

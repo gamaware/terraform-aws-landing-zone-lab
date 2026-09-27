@@ -23,7 +23,7 @@ module "organization" {
     }
     protect-security-baseline = {
       file        = "${local.policy_dir}/protect-security-baseline.json"
-      description = "Only the landing zone deploy role can change CloudTrail, Config, GuardDuty or Security Hub."
+      description = "Only the landing zone management access role can change CloudTrail, Config, GuardDuty or Security Hub."
       targets     = ["Root"]
     }
     restrict-regions = {

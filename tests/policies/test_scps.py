@@ -24,7 +24,7 @@ ORG_STACK = ROOT / "environments" / "management" / "us-east-1" / "organization" 
 SCP_MAX_CHARS = 5120
 APPROVED_REGIONS = {"us-east-1", "us-west-2"}
 
-DEPLOY_ROLE = "arn:aws:iam::555555555555:role/OrganizationAccountAccessRole"
+MANAGEMENT_ACCESS_ROLE = "arn:aws:iam::555555555555:role/OrganizationAccountAccessRole"
 DEVELOPER = "arn:aws:iam::555555555555:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_Developer_0123456789abcdef"
 PIPELINE = "arn:aws:iam::555555555555:role/github-actions-deploy"
 ROOT_USER = "arn:aws:iam::555555555555:root"
@@ -81,7 +81,7 @@ class DenyLeaveOrganizationTest(unittest.TestCase):
     policy = load(SCP_DIR / "deny-leave-organization.json")
 
     def test_nobody_can_leave(self):
-        for principal in (DEVELOPER, DEPLOY_ROLE, PIPELINE):
+        for principal in (DEVELOPER, MANAGEMENT_ACCESS_ROLE, PIPELINE):
             with self.subTest(principal=principal):
                 request = Request("organizations:LeaveOrganization", principal)
                 self.assertEqual(denied_by(self.policy, request), ["DenyLeaveOrganization"])
@@ -125,8 +125,8 @@ class RestrictRegionsTest(unittest.TestCase):
                 request = Request(action, DEVELOPER, region="eu-west-1")
                 self.assertEqual(denied_by(self.policy, request), [])
 
-    def test_deploy_role_is_exempt_for_break_glass(self):
-        request = Request("ec2:RunInstances", DEPLOY_ROLE, region="eu-west-1")
+    def test_management_access_role_is_exempt_for_break_glass(self):
+        request = Request("ec2:RunInstances", MANAGEMENT_ACCESS_ROLE, region="eu-west-1")
         self.assertEqual(denied_by(self.policy, request), [])
 
     def test_region_list_matches_documentation(self):
@@ -138,7 +138,7 @@ class ProtectSecurityBaselineTest(unittest.TestCase):
     policy = load(SCP_DIR / "protect-security-baseline.json")
 
     # Every action the policy lists, read from the file so a typo or a newly
-    # added action is exercised too. The deploy-role statement is resource
+    # added action is exercised too. The management access role statement is resource
     # scoped and tested separately below.
     TAMPERING = {
         action: statement["Sid"]
@@ -177,10 +177,10 @@ class ProtectSecurityBaselineTest(unittest.TestCase):
                 with self.subTest(principal=principal, action=action):
                     self.assertEqual(denied_by(self.policy, Request(action, principal)), [sid])
 
-    def test_deploy_role_can_manage_the_baseline(self):
+    def test_management_access_role_can_manage_the_baseline(self):
         for action in self.TAMPERING:
             with self.subTest(action=action):
-                self.assertEqual(denied_by(self.policy, Request(action, DEPLOY_ROLE)), [])
+                self.assertEqual(denied_by(self.policy, Request(action, MANAGEMENT_ACCESS_ROLE)), [])
 
     def test_reads_stay_allowed(self):
         for action in ("cloudtrail:LookupEvents", "config:DescribeConfigurationRecorders",
@@ -188,19 +188,19 @@ class ProtectSecurityBaselineTest(unittest.TestCase):
             with self.subTest(action=action):
                 self.assertEqual(denied_by(self.policy, Request(action, DEVELOPER)), [])
 
-    def test_deploy_role_cannot_be_modified_by_others(self):
-        request = Request("iam:UpdateAssumeRolePolicy", DEVELOPER, resource=DEPLOY_ROLE)
+    def test_management_access_role_cannot_be_modified_by_others(self):
+        request = Request("iam:UpdateAssumeRolePolicy", DEVELOPER, resource=MANAGEMENT_ACCESS_ROLE)
         self.assertEqual(denied_by(self.policy, request), ["ProtectDeployRole"])
 
-    def test_deploy_role_can_update_itself(self):
-        request = Request("iam:PutRolePolicy", DEPLOY_ROLE, resource=DEPLOY_ROLE)
+    def test_management_access_role_can_update_itself(self):
+        request = Request("iam:PutRolePolicy", MANAGEMENT_ACCESS_ROLE, resource=MANAGEMENT_ACCESS_ROLE)
         self.assertEqual(denied_by(self.policy, request), [])
 
     def test_other_roles_can_still_be_managed(self):
         request = Request("iam:PutRolePolicy", DEVELOPER, resource="arn:aws:iam::555555555555:role/storefront-task")
         self.assertEqual(denied_by(self.policy, request), [])
 
-    def test_exemption_names_only_the_deploy_role(self):
+    def test_exemption_names_only_the_management_access_role(self):
         # A broad exemption such as role/* would disable the guardrail.
         for statement in self.policy["Statement"]:
             exempt = statement["Condition"]["ArnNotLike"]["aws:PrincipalArn"]
