@@ -3,15 +3,14 @@
 This repository defines a multi-account AWS foundation for a new project using Terraform and AWS Organizations, with
 offline verification.
 
-[![ci](https://github.com/gamaware/terraform-aws-landing-zone-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/gamaware/terraform-aws-landing-zone-lab/actions/workflows/ci.yml)
+[![CI](https://github.com/gamaware/terraform-aws-landing-zone-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/gamaware/terraform-aws-landing-zone-lab/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Lab](https://img.shields.io/badge/type-lab-0B5563)
-![Fictional data](https://img.shields.io/badge/data-fictional-lightgrey)
+![Lab](https://img.shields.io/badge/type-lab-5b6b7f)
 
-![AWS landing zone in Terraform](docs/assets/cover.png)
+![AWS landing zone for a new project](docs/assets/cover.png)
 
-> This lab uses fictional data. The retailer "Harbor Goods" is invented, all account IDs come from AWS documentation
-> examples, and all addresses use `example.com`. No part of this lab has been deployed to a real organization.
+> **Lab.** Harbor Goods and all data here are fictional. Each repository in this portfolio is a
+> separate engagement with Harbor Goods, a fictional mid-size retailer. Account IDs are AWS documentation examples.
 
 ## What this proves
 
@@ -23,8 +22,8 @@ offline verification.
   subjects and constrained by a permissions boundary. Neither access path requires long-lived keys.
 - Teams get separate state for each account, region and stack, thin roots built on ten tested modules, and a runbook
   that specifies deployment checkpoints and rollback triggers.
-- Without AWS credentials, `make verify` completes 43 mocked-provider Terraform tests, 26 SCP tests, tflint and
-  Checkov in roughly a minute.
+- Without AWS credentials, `make verify` completes 43 mocked-provider Terraform tests, 26 SCP tests, a backend key
+  test, tflint and Checkov in roughly a minute.
 
 ## Inspect the deliverable
 
@@ -40,8 +39,9 @@ offline verification.
 
 ## Scenario and acceptance criteria
 
-Harbor Goods plans to launch an online storefront on AWS, starting with an empty account. Its staff includes a small
-platform team, a security reviewer and developers deploying through GitHub. The requirements are account separation
+Harbor Goods is starting a new project on AWS and wants it to run in its own organization, beginning with one empty
+management account. The project team includes a small platform team, a security reviewer and developers deploying
+through GitHub. The requirements are account separation
 for workloads, logs and security; single sign-on; preventive guardrails against risky changes; and billing that can
 be read by account.
 
@@ -49,18 +49,29 @@ The implementation must use Terraform and allow two regions: `us-east-1` as the 
 recovery. Control Tower is excluded, as explained in
 [ADR 0001](docs/adr/0001-raw-organizations-instead-of-control-tower.md), and CI must not store AWS keys.
 
+The example account IDs map to these accounts:
+
+| Account | Example ID |
+| --- | --- |
+| Management | 111122223333 |
+| Log archive | 444455556666 |
+| Security | 777788889999 |
+| Shared | 123456789012 |
+| Workloads | 555555555555 |
+
 Acceptance requires the following:
 
 1. Member accounts occupy their designated OUs and are prevented from leaving the organization.
 2. Member-account developer and pipeline roles are blocked from stopping CloudTrail, AWS Config, GuardDuty or
    Security Hub, and from creating regional resources beyond the approved regions.
 3. The log-archive bucket receives organization trail logs and Config snapshots encrypted with its KMS key.
-   Deletion and bucket-policy changes are restricted to the deploy role.
+   Deletion and bucket-policy changes are restricted to the management access role.
 4. The security account receives findings from all accounts.
 5. Human access is exclusively through Identity Center groups, with admin sessions limited to one hour.
 6. Only the `production` environment in `harbor-goods/storefront` can assume the pipeline role.
 7. Alerts trigger when actual spend reaches 80% and 100% of budget, and when forecast spend reaches 100%.
 
+These criteria are the single acceptance list; [the runbook](docs/runbook.md#acceptance-criteria) refers to them.
 Offline verification through `make verify` covers criteria 1-3, 5 and 6. In a sandbox account, `make test-live`
 additionally checks log bucket encryption and pipeline trust. Criteria 4 and 7 require a real organization;
 see [Limits](#limits-and-production-adaptations).
@@ -85,9 +96,10 @@ The prerequisites below show the versions used for repository development and ve
 | Tool | Version |
 | --- | --- |
 | Terraform | 1.14.5 (AWS provider 6.66.0, locked) |
-| TFLint | 0.61.0 with the AWS ruleset 0.44.0 |
-| Checkov | 3.2.529 |
-| Python | 3.11 or later, standard library only |
+| TFLint | 0.61.0 with the AWS ruleset 0.49.0 |
+| Checkov | 3.3.19 (run through `uvx`) |
+| uv | 0.12 or later |
+| Python | 3.13, standard library only |
 | GNU Make, Bash | any recent |
 
 ```bash
@@ -100,15 +112,18 @@ After the initial provider download, the following output should appear in rough
 modules/budgets                  Success! 3 passed, 0 failed.
 ...
 modules/security-services        Success! 2 passed, 0 failed.
-Ran 26 tests in 0.006s
+Ran 26 tests in 0.004s
 OK
-Passed checks: 393, Failed checks: 0, Skipped checks: 54
+...
+Ran 3 tests in 0.004s
+OK
+Passed checks: 397, Failed checks: 0, Skipped checks: 54
 Only example account IDs found.
-verify: all offline checks passed
+verify: all checks passed
 ```
 
-Individual targets are listed by `make help`: `fmt`, `validate`, `lint`, `test`, `policy-test`, `checkov` and
-`example-ids`.
+Individual targets are listed by `make help`: `fmt`, `validate`, `lint`, `test`, `policy-test`, `structure-test`,
+`checkov` and `example-ids`.
 
 ### Optional live test
 
@@ -140,6 +155,7 @@ any remaining tagged resource causes failure. State resides in a temporary direc
 ├── policies/scp/              SCP JSON attached by the organization stack
 ├── tests/
 │   ├── policies/              SCP structure tests and a small Deny-only evaluator
+│   ├── structure/             backend key test: one unique key per root
 │   └── live/                  opt-in live test root
 ├── scripts/                   test-live.sh, check-example-ids.sh
 └── docs/                      ADRs, runbook, diagrams, cover
@@ -147,11 +163,13 @@ any remaining tagged resource causes failure. State resides in a temporary direc
 
 ## Decisions and trade-offs
 
-| ADR | Title | Status |
+Architecture decision records follow the *Fundamentals of Software Architecture* (2nd ed.) format.
+
+| Number | Title | Status |
 | --- | --- | --- |
 | [0001](docs/adr/0001-raw-organizations-instead-of-control-tower.md) | Raw AWS Organizations instead of AWS Control Tower | Accepted |
 | [0002](docs/adr/0002-account-region-stack-composition.md) | One state per account, region and stack | Accepted |
-| [0003](docs/adr/0003-scp-guardrail-design.md) | Deny-list SCPs with one deploy-role exemption | Accepted |
+| [0003](docs/adr/0003-scp-guardrail-design.md) | Deny-list SCPs with one management access role exemption | Accepted |
 | [0004](docs/adr/0004-single-home-region.md) | One home region, a second approved region | Accepted |
 | [0005](docs/adr/0005-offline-verification-and-live-scope.md) | Offline verification by default, a narrow live test | Accepted |
 | [0006](docs/adr/0006-delegated-administration.md) | Security tooling runs from a delegated administrator account | Accepted |
@@ -168,6 +186,7 @@ path for a later migration.
 | tflint (all Terraform rules, AWS ruleset) | `make verify`, CI | Typed, documented inputs; standard module structure |
 | `terraform test`, mocked AWS provider | `make verify`, CI | Tests what each module decides: targets, conditions, validations |
 | SCP policy tests | `make verify` | Each guardrail denies and allows the right requests |
+| Backend key test | `make verify` | Each root keeps its own state key, derived from its path |
 | Checkov, skips only next to the resource with a reason | `make verify`, CI `security` | Misconfiguration scan of every module and stack |
 | Example-ID guard | `make verify`, pre-commit | No real account ID can land in the repository |
 | Semgrep, Trivy, gitleaks, markdownlint, Vale, actionlint, zizmor | CI shared workflows, pre-commit | Code, secrets, docs and workflow hygiene |
@@ -191,9 +210,9 @@ SHAs, and CI has neither AWS credentials nor `id-token` permission.
 
 ## Related work
 
-This repository belongs to the [AWS DevOps portfolio](https://github.com/gamaware/aws-devops-portfolio), where each
-repository is mapped to a service offer. The lab supports the offer to build an AWS landing zone for a new project
-using Terraform or AWS CDK. Alex applies the same method in audits for ITESO and freelance clients in Guadalajara.
+This repository belongs to the [AWS DevOps portfolio](https://github.com/gamaware/aws-devops-portfolio) and supports
+the service [AWS landing zone for a new project on Upwork](https://www.upwork.com/freelancers/~014b3520cf9e140103).
+The method is the one Alex uses in audits for ITESO and freelance clients in Guadalajara.
 
 ## License
 

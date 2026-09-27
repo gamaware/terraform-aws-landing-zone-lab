@@ -37,4 +37,11 @@ changes. Splitting by environment branches or copying code per account would let
 
 - `make validate` and the CI `terraform` job validate every root under `environments/`.
 - `make lint` runs tflint with `terraform_standard_module_structure` on every root and module.
-- Each root's `versions.tf` sets a backend key derived from its path; the rules in `CLAUDE.md` require it to be unique.
+- `tests/structure/test_backend_keys.py` (`make structure-test`) asserts that each root's backend key matches its
+  path and that no two roots share a key.
+
+## Notes
+
+- S3 backend and native state locking (`use_lockfile`):
+  <https://developer.hashicorp.com/terraform/language/backend/s3>
+- ADR 0005 describes how these roots are verified without an AWS account.

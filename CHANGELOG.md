@@ -18,8 +18,9 @@ All notable changes to this project are documented in this file. The format foll
 - Shared VPC in the shared account with private subnets shared to the Workloads OU through AWS RAM.
 - Monthly budgets per account and for the organization.
 - GitHub OIDC pipeline role for the workloads account, with exact subjects and a permissions boundary.
-- Offline verification: `terraform test` with a mocked provider in every module, SCP policy tests, tflint, Checkov and
-  an example-account-ID guard, all behind `make verify`.
+- Offline verification: `terraform test` with a mocked provider in every module, SCP policy tests, a backend key
+  test, tflint, Checkov and an example-account-ID guard, all behind `make verify`.
+- OpenSSF Scorecard and a weekly pre-commit hook update workflow.
 - Opt-in `make test-live` for non-organization modules, guarded by `CONFIRM_LIVE=yes`.
 - Six ADRs, a deployment runbook and architecture diagrams.
 

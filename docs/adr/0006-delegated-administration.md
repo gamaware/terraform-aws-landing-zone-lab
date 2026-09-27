@@ -14,7 +14,7 @@ the most powerful account in the organization.
 
 - The organization stack registers the security account as delegated administrator for GuardDuty, Security Hub and AWS
   Config (`config.amazonaws.com`).
-- The security-services stack, applied in the security account, enables GuardDuty with auto-enrolment of every member
+- The security-services stack, applied in the security account, enables GuardDuty with auto-enrollment of every member
   and the S3 Protection and EBS Malware Protection plans, Security Hub with auto-enable and the AWS Foundational
   Security Best Practices and CIS standards, and an organization-wide Config aggregator.
 - Logs stay in the log-archive account; the security account's `SecurityAudit` permission set users can decrypt them,
@@ -30,4 +30,9 @@ the most powerful account in the organization.
 ## Compliance
 
 - `modules/organization/tests/organization.tftest.hcl` asserts that all three delegations point at the security account.
-- `modules/security-services/tests/security_services.tftest.hcl` asserts auto-enrolment and the standards.
+- `modules/security-services/tests/security_services.tftest.hcl` asserts auto-enrollment and the standards.
+
+## Notes
+
+- AWS services that support delegated administrators:
+  <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html>

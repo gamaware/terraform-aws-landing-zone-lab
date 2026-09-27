@@ -108,9 +108,6 @@ can assume the role. Confirm that STS rejects runs from any other branch or envi
 
 ## Acceptance criteria
 
-- Every member account belongs to its intended OU, with departure from the organization prohibited.
-- Developer sessions in the workloads account cannot stop CloudTrail, the Config recorder, GuardDuty or Security Hub,
-  or launch regional resources beyond `us-east-1` and `us-west-2`.
-- The log-archive bucket receives organization trail logs and Config snapshots encrypted using that bucket's key.
-- The security account displays findings originating from every account.
-- The listed addresses receive budget alerts when actual spend reaches 80% and 100%, and forecast spend reaches 100%.
+The deployment is accepted when it meets the seven criteria in the
+[README](../README.md#scenario-and-acceptance-criteria). Criteria 4 and 7 need the real organization; check them
+after the security-services and budgets stacks are applied.

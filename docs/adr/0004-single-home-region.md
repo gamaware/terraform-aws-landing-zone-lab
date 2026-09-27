@@ -30,3 +30,8 @@ logs and state.
 - `modules/config-recorder/tests/config_recorder.tftest.hcl` asserts that global resources are recorded only when
   `record_global_resources` is true.
 - `tests/policies/test_scps.py` asserts the approved region list.
+
+## Notes
+
+- Example SCPs, including the region deny pattern:
+  <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html>

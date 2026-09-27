@@ -91,7 +91,7 @@ def denied_by(policy: dict, request: Request) -> list[str]:
         if unknown:
             raise UnsupportedPolicy(f"statement keys {sorted(unknown)}")
         if statement["Effect"] != "Deny":
-            raise UnsupportedPolicy("only Deny statements are modelled")
+            raise UnsupportedPolicy("only Deny statements are modeled")
         if not _action_in_scope(statement, request.action):
             continue
         resources = _as_list(statement.get("Resource", "*"))
