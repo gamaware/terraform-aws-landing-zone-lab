@@ -1,6 +1,6 @@
 # Security services module
 
-Runs in the security account after delegation. Enables GuardDuty with organization auto-enrolment and protection plans,
+Runs in the security account after delegation. Enables GuardDuty with organization auto-enrollment and protection plans,
 Security Hub with auto-enable and the listed standards, and an organization-wide AWS Config aggregator.
 
 Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/) (`terraform test`, mocked provider).
@@ -10,7 +10,7 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 
 | Name | Version |
 | ---- | ------- |
-| terraform | >= 1.10.0 |
+| terraform | >= 1.11.0, < 2.0.0 |
 | aws | >= 6.0, < 7.0 |
 
 ## Providers

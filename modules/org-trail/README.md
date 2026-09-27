@@ -10,7 +10,7 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 
 | Name | Version |
 | ---- | ------- |
-| terraform | >= 1.10.0 |
+| terraform | >= 1.11.0, < 2.0.0 |
 | aws | >= 6.0, < 7.0 |
 
 ## Providers
