@@ -1,0 +1,28 @@
+language: en
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "modules/**/*.tf"
+      instructions: >-
+        Reusable modules. Check least privilege in IAM, KMS and bucket policies, that every
+        input has a description, type and validation where a wrong value is dangerous, and
+        that behaviour changes come with a matching assertion in tests/*.tftest.hcl.
+    - path: "environments/**"
+      instructions: >-
+        Thin roots, one state per account/region/stack. Flag logic that belongs in a module,
+        provider blocks without allowed_account_ids, duplicate backend keys, and any account ID
+        other than the AWS documentation examples.
+    - path: "policies/scp/*.json"
+      instructions: >-
+        Service control policies. Deny-only. Flag broad exemptions (role/* or account wildcards
+        beyond OrganizationAccountAccessRole) and changes without a matching update in
+        tests/policies/test_scps.py.
+    - path: "**/*.sh"
+      instructions: >-
+        Must pass shellcheck and shellharden. Quote every variable. Live-test scripts must keep
+        the CONFIRM_LIVE guard and the exit trap that destroys resources.
+    - path: "**/*.md"
+      instructions: >-
+        Line length 120 (tables exempt), sentence-case headings, no marketing language, no dates.

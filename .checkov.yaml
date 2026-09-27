@@ -1,0 +1,11 @@
+# Checkov scans every module, stack and the bootstrap. Skips are never
+# global: each one sits next to its resource with the reason.
+directory:
+  - .
+framework:
+  - terraform
+skip-path:
+  - \.terraform
+  - tests/policies
+compact: true
+quiet: true
