@@ -46,8 +46,8 @@ variable "allowed_actions" {
   ]
 
   validation {
-    condition     = !contains(var.allowed_actions, "*") && !contains(var.allowed_actions, "iam:*")
-    error_message = "The boundary must not allow * or iam:*."
+    condition     = !anytrue([for a in var.allowed_actions : startswith(a, "*") || can(regex("^iam:.*\\*", lower(a)))])
+    error_message = "The boundary must not allow a service wildcard (*, *:*) or any IAM action wildcard (iam:*, IAM:*Role*)."
   }
 
   validation {

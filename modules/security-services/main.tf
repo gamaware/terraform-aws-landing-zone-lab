@@ -5,6 +5,8 @@ data "aws_partition" "current" {}
 
 data "aws_region" "current" {}
 
+data "aws_caller_identity" "current" {}
+
 locals {
   partition = data.aws_partition.current.partition
   region    = data.aws_region.current.region
@@ -62,6 +64,13 @@ data "aws_iam_policy_document" "config_assume" {
     principals {
       type        = "Service"
       identifiers = ["config.amazonaws.com"]
+    }
+
+    # Confused-deputy guard: only AWS Config acting for this account.
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
     }
   }
 }

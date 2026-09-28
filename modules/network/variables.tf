@@ -8,7 +8,7 @@ variable "cidr_block" {
   type        = string
 
   validation {
-    condition     = can(cidrhost(var.cidr_block, 0)) && endswith(var.cidr_block, "/16")
+    condition     = can(cidrhost(var.cidr_block, 0)) && can(regex("^[0-9]{1,3}(\\.[0-9]{1,3}){3}/16$", var.cidr_block))
     error_message = "cidr_block must be a valid IPv4 /16, for example 10.20.0.0/16."
   }
 }

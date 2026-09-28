@@ -1,11 +1,11 @@
-# Checkov scans every module, stack and the bootstrap. Skips are never
-# global: each one sits next to its resource with the reason.
+# Checkov scans every module, stack and the bootstrap. Check skips are never
+# global: each one sits next to its resource with the reason. The only path
+# excluded is .terraform, which holds downloaded providers and modules.
 directory:
   - .
 framework:
   - terraform
 skip-path:
   - \.terraform
-  - tests/policies
 compact: true
 quiet: true

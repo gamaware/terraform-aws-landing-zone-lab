@@ -208,3 +208,33 @@ run "rejects_wildcard_bucket" {
 
   expect_failures = [var.s3_bucket_arns]
 }
+
+run "rejects_admin_boundary_in_any_case" {
+  command = plan
+
+  variables {
+    allowed_actions = ["ecs:*", "IAM:*"]
+  }
+
+  expect_failures = [var.allowed_actions]
+}
+
+run "rejects_service_wildcard" {
+  command = plan
+
+  variables {
+    allowed_actions = ["*:*"]
+  }
+
+  expect_failures = [var.allowed_actions]
+}
+
+run "rejects_iam_action_wildcard" {
+  command = plan
+
+  variables {
+    allowed_actions = ["ecs:*", "iam:*Role*"]
+  }
+
+  expect_failures = [var.allowed_actions]
+}

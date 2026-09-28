@@ -22,7 +22,7 @@ offline verification.
   subjects and constrained by a permissions boundary. Neither access path requires long-lived keys.
 - Teams get separate state for each account, region and stack, thin roots built on ten tested modules, and a runbook
   that specifies deployment checkpoints and rollback triggers.
-- Without AWS credentials, `make verify` completes 43 mocked-provider Terraform tests, 26 SCP tests, a backend key
+- Without AWS credentials, `make verify` completes 54 mocked-provider Terraform tests, 26 SCP tests, a backend key
   test, tflint and Checkov in roughly a minute.
 
 ## Inspect the deliverable

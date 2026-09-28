@@ -85,7 +85,9 @@ def _allows_anyone(policy: Any) -> bool:
         statements = [statements]
     for statement in statements:
         principal = statement.get("Principal")
-        anyone = principal == "*" or (isinstance(principal, dict) and "*" in _as_list(principal.get("AWS")))
+        anyone = principal == "*" or (
+            isinstance(principal, dict) and any("*" in _as_list(value) for value in principal.values())
+        )
         if statement.get("Effect") == "Allow" and anyone and not statement.get("Condition"):
             return True
     return False

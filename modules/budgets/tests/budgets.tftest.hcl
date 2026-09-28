@@ -103,3 +103,15 @@ run "rejects_missing_subscribers" {
 
   expect_failures = [var.subscriber_emails]
 }
+
+run "rejects_out_of_range_forecast_threshold" {
+  command = plan
+
+  variables {
+    budgets = {
+      broken = { limit_usd = 100, forecast_threshold = 201 }
+    }
+  }
+
+  expect_failures = [var.budgets]
+}

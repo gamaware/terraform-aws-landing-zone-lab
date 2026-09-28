@@ -1,7 +1,8 @@
 # Minimal usage with example values. Validated offline by make verify.
 
 provider "aws" {
-  region = var.region
+  region              = var.region
+  allowed_account_ids = ["444455556666"]
 }
 
 module "log_archive" {
