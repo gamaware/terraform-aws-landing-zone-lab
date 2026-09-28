@@ -44,6 +44,7 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 | ---- | ----------- | ---- | ------- | :------: |
 | log\_bucket\_name | Central log bucket in the log-archive account. | `string` | n/a | yes |
 | log\_kms\_key\_arn | KMS key in the log-archive account that encrypts trail log files. | `string` | n/a | yes |
+| data\_event\_bucket\_arns | Buckets whose object reads and writes are recorded as S3 data events, for example the Terraform state bucket. Reads of the log archive are always recorded. | `list(string)` | `[]` | no |
 | log\_group\_name | CloudWatch Logs group that receives a copy of the trail in the management account. | `string` | `"/aws/cloudtrail/organization-trail"` | no |
 | log\_group\_retention\_days | Retention of the CloudWatch Logs copy. The S3 archive is the long-term record. | `number` | `365` | no |
 | tags | Tags applied to every resource. | `map(string)` | `{}` | no |

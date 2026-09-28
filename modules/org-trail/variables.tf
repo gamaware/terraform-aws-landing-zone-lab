@@ -19,6 +19,17 @@ variable "log_kms_key_arn" {
   }
 }
 
+variable "data_event_bucket_arns" {
+  description = "Buckets whose object reads and writes are recorded as S3 data events, for example the Terraform state bucket. Reads of the log archive are always recorded."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for arn in var.data_event_bucket_arns : can(regex("^arn:aws[a-z-]*:s3:::[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", arn))])
+    error_message = "Each entry must be a bucket ARN without wildcards or object paths."
+  }
+}
+
 variable "log_group_name" {
   description = "CloudWatch Logs group that receives a copy of the trail in the management account."
   type        = string

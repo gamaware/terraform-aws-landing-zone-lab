@@ -1,6 +1,8 @@
 # Organization CloudTrail, created in the management account and delivered to
 # the log-archive bucket. A copy streams to CloudWatch Logs in the management
-# account so metric filters and alarms can act on it.
+# account so metric filters and alarms can act on it. S3 data events replace
+# S3 server access logs (ADR 0007): reads of the log archive, and every read
+# and write of the buckets in data_event_bucket_arns, such as Terraform state.
 
 data "aws_caller_identity" "current" {}
 
@@ -13,6 +15,8 @@ locals {
   partition  = data.aws_partition.current.partition
   region     = data.aws_region.current.region
   trail_arn  = "arn:${local.partition}:cloudtrail:${local.region}:${local.account_id}:trail/${var.trail_name}"
+
+  log_bucket_arn = "arn:${local.partition}:s3:::${var.log_bucket_name}"
 }
 
 data "aws_iam_policy_document" "log_group_kms" {
@@ -167,9 +171,62 @@ resource "aws_cloudtrail" "organization" {
   sns_topic_name                = aws_sns_topic.trail.name
   tags                          = var.tags
 
-  event_selector {
-    read_write_type           = "All"
-    include_management_events = true
+  advanced_event_selector {
+    name = "Management events"
+
+    field_selector {
+      field  = "eventCategory"
+      equals = ["Management"]
+    }
+  }
+
+  # Reads only: CloudTrail and AWS Config write here continuously, and logging
+  # those writes would feed the trail its own delivery.
+  advanced_event_selector {
+    name = "Log archive reads"
+
+    field_selector {
+      field  = "eventCategory"
+      equals = ["Data"]
+    }
+
+    field_selector {
+      field  = "resources.type"
+      equals = ["AWS::S3::Object"]
+    }
+
+    field_selector {
+      field  = "readOnly"
+      equals = ["true"]
+    }
+
+    field_selector {
+      field       = "resources.ARN"
+      starts_with = ["${local.log_bucket_arn}/"]
+    }
+  }
+
+  dynamic "advanced_event_selector" {
+    for_each = length(var.data_event_bucket_arns) > 0 ? [1] : []
+
+    content {
+      name = "Watched bucket reads and writes"
+
+      field_selector {
+        field  = "eventCategory"
+        equals = ["Data"]
+      }
+
+      field_selector {
+        field  = "resources.type"
+        equals = ["AWS::S3::Object"]
+      }
+
+      field_selector {
+        field       = "resources.ARN"
+        starts_with = [for arn in var.data_event_bucket_arns : "${arn}/"]
+      }
+    }
   }
 
   depends_on = [aws_iam_role_policy.trail_to_logs, aws_sns_topic_policy.trail]

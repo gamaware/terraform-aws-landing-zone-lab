@@ -99,3 +99,48 @@ run "rejects_short_log_group_retention" {
 
   expect_failures = [var.log_group_retention_days]
 }
+
+run "data_events_replace_server_access_logs" {
+  command = plan
+
+  variables {
+    data_event_bucket_arns = ["arn:aws:s3:::harbor-goods-tfstate-111122223333"]
+  }
+
+  assert {
+    condition = anytrue([
+      for s in aws_cloudtrail.organization.advanced_event_selector : s.name == "Log archive reads" && anytrue([
+        for f in s.field_selector : f.field == "resources.ARN" && toset(f.starts_with) == toset(["arn:aws:s3:::harbor-goods-log-archive-444455556666/"])
+      ]) && anytrue([for f in s.field_selector : f.field == "readOnly" && toset(f.equals) == toset(["true"])])
+    ])
+    error_message = "Reads of the log archive must be recorded as S3 data events."
+  }
+
+  assert {
+    condition = anytrue([
+      for s in aws_cloudtrail.organization.advanced_event_selector : s.name == "Watched bucket reads and writes" && anytrue([
+        for f in s.field_selector : f.field == "resources.ARN" && toset(f.starts_with) == toset(["arn:aws:s3:::harbor-goods-tfstate-111122223333/"])
+      ])
+    ])
+    error_message = "Every read and write of a watched bucket must be recorded."
+  }
+
+  assert {
+    condition = anytrue([
+      for s in aws_cloudtrail.organization.advanced_event_selector : anytrue([
+        for f in s.field_selector : f.field == "eventCategory" && toset(f.equals) == toset(["Management"])
+      ])
+    ])
+    error_message = "Management events must stay on."
+  }
+}
+
+run "rejects_a_wildcard_data_event_bucket" {
+  command = plan
+
+  variables {
+    data_event_bucket_arns = ["arn:aws:s3:::*"]
+  }
+
+  expect_failures = [var.data_event_bucket_arns]
+}
