@@ -18,6 +18,7 @@ here has been deployed to a real organization.
 - `tests/policies/`: SCP structure and outcome tests (stdlib `unittest`, no dependencies).
 - `tests/structure/`: backend key test (one unique key per root, derived from its path).
 - `tests/live/` and `scripts/test-live.sh`: opt-in live test for non-organization modules only.
+  Live tests run private-only: keep `nat_gateway_mode = "none"` there; `scripts/check_private_plan.py` guards the plan.
 - `docs/adr/`, `docs/runbook.md`, `docs/diagrams/`.
 
 ## Rules

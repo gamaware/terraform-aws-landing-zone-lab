@@ -40,3 +40,9 @@ should be able to check the work without an AWS account.
 
 - Closing a member account:
   <https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_close.html>
+- Live tests run private-only. The live root builds its VPC with `nat_gateway_mode = "none"`: no internet gateway,
+  public subnet, NAT gateway or Elastic IP, and a default security group with no rules. The
+  `tests/live/tests/private_only.tftest.hcl` run fails offline if that changes. Before applying,
+  `scripts/test-live.sh` saves the plan and `scripts/check_private_plan.py` refuses it if any resource would be
+  internet-facing (load balancer, `0.0.0.0/0` or `::/0` ingress, public IP, public database, open bucket or public
+  endpoint).

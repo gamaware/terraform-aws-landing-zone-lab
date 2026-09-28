@@ -123,7 +123,7 @@ verify: all checks passed
 ```
 
 Individual targets are listed by `make help`: `fmt`, `validate`, `lint`, `test`, `policy-test`, `structure-test`,
-`checkov` and `example-ids`.
+`private-live-test`, `checkov` and `example-ids`.
 
 ### Optional live test
 
@@ -140,6 +140,10 @@ CONFIRM_LIVE=yes LIVE_ACCOUNT_ID=<sandbox account id> make test-live
 
 Both variables are mandatory for the test to start. Every resource receives `purpose=portfolio-test` and a run ID;
 any remaining tagged resource causes failure. State resides in a temporary directory outside the repository.
+
+Live tests run private-only. The VPC has no internet gateway, public subnet or NAT gateway, and
+`scripts/check_private_plan.py` refuses the saved plan before `terraform apply` if any resource would be
+internet-facing. `make verify` runs the same rules offline.
 
 ## Repository map
 
