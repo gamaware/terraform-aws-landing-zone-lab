@@ -44,5 +44,6 @@ should be able to check the work without an AWS account.
   public subnet, NAT gateway or Elastic IP, and a default security group with no rules. The
   `tests/live/tests/private_only.tftest.hcl` run fails offline if that changes. Before applying,
   `scripts/test-live.sh` saves the plan and `scripts/check_private_plan.py` refuses it if any resource would be
-  internet-facing (load balancer, `0.0.0.0/0` or `::/0` ingress, public IP, public database, open bucket or public
-  endpoint).
+  internet-facing (internet or public NAT gateway, Elastic IP, default route to the internet, public load balancer,
+  `0.0.0.0/0` or `::/0` ingress, public IP, public database, open bucket or public endpoint) or uses Route 53. The
+  checker is a byte-identical copy shared across the portfolio repositories.

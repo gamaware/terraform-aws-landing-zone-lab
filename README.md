@@ -143,7 +143,7 @@ any remaining tagged resource causes failure. State resides in a temporary direc
 
 Live tests run private-only. The VPC has no internet gateway, public subnet or NAT gateway, and
 `scripts/check_private_plan.py` refuses the saved plan before `terraform apply` if any resource would be
-internet-facing. `make verify` runs the same rules offline.
+internet-facing or use Route 53. `make verify` runs the same rules offline.
 
 ## Repository map
 
