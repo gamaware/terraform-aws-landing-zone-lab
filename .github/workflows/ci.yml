@@ -1,0 +1,114 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-docs:
+    name: lint-docs
+    uses: gamaware/.github/.github/workflows/lint-docs.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    permissions:
+      contents: read # checkout
+
+  lint-actions:
+    name: lint-actions
+    uses: gamaware/.github/.github/workflows/lint-actions.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    permissions:
+      contents: read # checkout
+
+  secrets:
+    name: secrets
+    uses: gamaware/.github/.github/workflows/secrets.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    permissions:
+      contents: read # checkout
+
+  security:
+    name: security
+    uses: gamaware/.github/.github/workflows/security.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    permissions:
+      contents: read # checkout
+    with:
+      checkov-config: .checkov.yaml
+
+  terraform:
+    name: terraform
+    uses: gamaware/.github/.github/workflows/terraform.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    permissions:
+      contents: read # checkout
+    with:
+      terraform-version: "1.14.5"
+      tflint-version: v0.61.0
+      working-directories: >-
+        [
+          "bootstrap",
+          "environments/log-archive/us-east-1/baseline",
+          "environments/log-archive/us-east-1/log-archive",
+          "environments/management/us-east-1/budgets",
+          "environments/management/us-east-1/identity-center",
+          "environments/management/us-east-1/org-trail",
+          "environments/management/us-east-1/organization",
+          "environments/security/us-east-1/baseline",
+          "environments/security/us-east-1/security-services",
+          "environments/shared/us-east-1/baseline",
+          "environments/shared/us-east-1/network",
+          "environments/workloads/us-east-1/baseline",
+          "environments/workloads/us-east-1/pipeline-role",
+          "modules/budgets",
+          "modules/config-recorder",
+          "modules/identity-center",
+          "modules/log-archive",
+          "modules/network",
+          "modules/org-trail",
+          "modules/organization",
+          "modules/pipeline-role",
+          "modules/secure-bucket",
+          "modules/security-services"
+        ]
+
+  # The same entry point as local runs: every offline check, including the SCP
+  # policy tests and the example-ID guard that the shared workflows do not run.
+  verify:
+    name: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read # checkout
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.14.5"
+          terraform_wrapper: false
+
+      - name: Set up TFLint
+        uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef # v6.3.1
+        with:
+          tflint_version: v0.61.0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+
+      - name: Run make verify
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: make verify

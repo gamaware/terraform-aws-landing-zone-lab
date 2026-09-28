@@ -1,0 +1,11 @@
+{
+  "color": "#0B5563",
+  "heading": ["AWS landing zone", "in Terraform"],
+  "subtitle": "Organizations · SCPs · org trail · Identity Center",
+  "steps": [
+    {"label": "Accounts and guardrails"},
+    {"label": "Logs, detection, access"},
+    {"label": "Verified offline"}
+  ],
+  "illustration": "social-preview-illustration.svg"
+}

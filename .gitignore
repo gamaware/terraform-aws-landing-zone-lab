@@ -1,0 +1,43 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# terraform.tfvars files are committed on purpose: they hold the fictional
+# example values each stack is validated with. Real client values stay out.
+*.auto.tfvars
+# Lock files are committed for deployable roots only (bootstrap, environments).
+modules/**/.terraform.lock.hcl
+tests/live/.terraform.lock.hcl
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets and local config
+.env
+.env.local
+*.pem
+*.key
+credentials.json
+
+# Tooling output
+.firecrawl/
+.checkov/
+results.sarif
+styles/
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
+
