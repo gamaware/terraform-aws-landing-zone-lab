@@ -126,7 +126,6 @@ terraform -chdir="$LIVE_DIR" show -json "$WORK_DIR/live.tfplan" >"$WORK_DIR/live
 terraform -chdir="$LIVE_DIR" apply -input=false "$WORK_DIR/live.tfplan"
 
 BUCKET="$(terraform -chdir="$LIVE_DIR" output -raw log_bucket_name)"
-ACCESS_BUCKET="$BUCKET-access"
 VPC_ID="$(terraform -chdir="$LIVE_DIR" output -raw vpc_id)"
 
 fail() {
@@ -143,22 +142,20 @@ PAB="$(aws s3api get-public-access-block --profile "$PROFILE" --bucket "$BUCKET"
   --query 'PublicAccessBlockConfiguration.[BlockPublicAcls,BlockPublicPolicy,IgnorePublicAcls,RestrictPublicBuckets]' --output text)"
 [[ "$PAB" == $'True\tTrue\tTrue\tTrue' ]] || fail "public access block is '$PAB'"
 
-# AWS CLI v2 rejects /dev/null as a blob body; it needs a regular file.
-PROBE_FILE="$WORK_DIR/probe.txt"
-: >"$PROBE_FILE"
-
-# Control: a write over HTTPS works. Probe: the same write over plain HTTP is
-# refused by the bucket policy with AccessDenied, not by some other error. The
-# probe targets the SSE-S3 access-log bucket, which gets the same TLS-only
-# statement from secure-bucket: S3 rejects any plain-HTTP write to a bucket
-# with KMS default encryption before the bucket policy is evaluated.
-aws s3api put-object --profile "$PROFILE" --bucket "$ACCESS_BUCKET" --key probe-https.txt --body "$PROBE_FILE" >/dev/null \
-  || fail "HTTPS write to the access-log bucket failed; the probe below would prove nothing"
-if HTTP_ERR="$(aws s3api put-object --profile "$PROFILE" --bucket "$ACCESS_BUCKET" --key probe-http.txt --body "$PROBE_FILE" \
-  --endpoint-url "http://s3.$REGION.amazonaws.com" 2>&1 >/dev/null)"; then
-  fail "plain HTTP write to the access-log bucket succeeded; the TLS-only policy is not enforced"
-fi
-[[ "$HTTP_ERR" == *AccessDenied* ]] || fail "plain HTTP write failed for another reason: $HTTP_ERR"
+# The TLS-only statement cannot be probed with a plain-HTTP write: S3 rejects
+# plain HTTP to a bucket with SSE-KMS default encryption before the bucket
+# policy is evaluated, and every bucket here uses SSE-KMS. Assert the
+# statement in the live policy instead.
+POLICY="$(aws s3api get-bucket-policy --profile "$PROFILE" --bucket "$BUCKET" --query Policy --output text)"
+python3 -c '
+import json, sys
+policy = json.loads(sys.argv[1])
+ok = any(
+    s.get("Effect") == "Deny" and s.get("Condition", {}).get("Bool", {}).get("aws:SecureTransport") == "false"
+    for s in policy["Statement"]
+)
+sys.exit(0 if ok else 1)
+' "$POLICY" || fail "log bucket policy has no Deny for requests without TLS"
 
 RULES="$(aws ec2 describe-security-groups --profile "$PROFILE" --region "$REGION" \
   --filters "Name=vpc-id,Values=$VPC_ID" "Name=group-name,Values=default" \
