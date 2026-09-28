@@ -42,7 +42,6 @@ variable "allowed_actions" {
     "iam:GetRole",
     "lambda:*",
     "logs:*",
-    "s3:*",
     "ssm:GetParameter*",
   ]
 
@@ -52,8 +51,24 @@ variable "allowed_actions" {
   }
 
   validation {
+    condition     = !anytrue([for a in var.allowed_actions : startswith(lower(a), "s3:")])
+    error_message = "Grant S3 through s3_bucket_arns, which scopes object and listing actions to named buckets."
+  }
+
+  validation {
     condition     = !contains([for a in var.allowed_actions : lower(a)], "iam:passrole")
     error_message = "Grant iam:PassRole through passable_role_arns, which scopes it to named roles and services."
+  }
+}
+
+variable "s3_bucket_arns" {
+  description = "Buckets the pipeline may read and write, for example the Terraform state bucket (objects and the S3 lock file). Empty allows no S3 access."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for arn in var.s3_bucket_arns : can(regex("^arn:aws[a-z-]*:s3:::[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", arn))])
+    error_message = "Each entry must be a bucket ARN without wildcards or object paths."
   }
 }
 

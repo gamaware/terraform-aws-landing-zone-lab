@@ -37,13 +37,14 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | github\_subjects | Exact OIDC subjects allowed to assume the role, for example repo:harbor-goods/storefront:environment:production. | `list(string)` | n/a | yes |
-| allowed\_actions | Actions the permissions boundary allows. The deploy policy grants a subset; the boundary is the ceiling. | `list(string)` | ```[ "application-autoscaling:*", "cloudwatch:*", "ecr:*", "ecs:*", "elasticloadbalancing:*", "iam:GetRole", "lambda:*", "logs:*", "s3:*", "ssm:GetParameter*" ]``` | no |
+| allowed\_actions | Actions the permissions boundary allows. The deploy policy grants a subset; the boundary is the ceiling. | `list(string)` | ```[ "application-autoscaling:*", "cloudwatch:*", "ecr:*", "ecs:*", "elasticloadbalancing:*", "iam:GetRole", "lambda:*", "logs:*", "ssm:GetParameter*" ]``` | no |
 | deploy\_policy\_json | Inline policy with the permissions the pipeline actually needs. Null leaves the role with no permissions. | `string` | `null` | no |
 | max\_session\_duration | Maximum session length in seconds. | `number` | `3600` | no |
 | oidc\_provider\_arn | Existing GitHub OIDC provider in the account. Null creates one; an account can hold only one per URL. | `string` | `null` | no |
 | pass\_role\_services | Services the pipeline may pass those roles to. | `list(string)` | ```[ "ecs-tasks.amazonaws.com" ]``` | no |
 | passable\_role\_arns | Role ARNs (or ARN patterns) the pipeline may pass, for example task execution roles of the workload. | `list(string)` | `[]` | no |
 | role\_name | Name of the deploy role. The boundary policy is named <role\_name>-boundary. | `string` | `"github-actions-deploy"` | no |
+| s3\_bucket\_arns | Buckets the pipeline may read and write, for example the Terraform state bucket (objects and the S3 lock file). Empty allows no S3 access. | `list(string)` | `[]` | no |
 | tags | Tags applied to every resource. | `map(string)` | `{}` | no |
 
 ## Outputs

@@ -59,6 +59,24 @@ data "aws_iam_policy_document" "boundary" {
     resources = ["*"]
   }
 
+  # S3 is not a service-wide grant: object read/write (including the Terraform
+  # S3 lock file) and listing, on named buckets only.
+  dynamic "statement" {
+    for_each = length(var.s3_bucket_arns) > 0 ? [1] : []
+
+    content {
+      sid = "AllowNamedBuckets"
+      actions = [
+        "s3:DeleteObject",
+        "s3:GetBucketLocation",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:PutObject",
+      ]
+      resources = concat(var.s3_bucket_arns, [for arn in var.s3_bucket_arns : "${arn}/*"])
+    }
+  }
+
   # PassRole is the usual boundary escape: with lambda:* or ecs:* the pipeline
   # could run code as any role in the account. Only named roles, only to the
   # listed services.

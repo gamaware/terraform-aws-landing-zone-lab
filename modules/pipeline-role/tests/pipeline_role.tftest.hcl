@@ -167,3 +167,44 @@ run "rejects_admin_boundary" {
 
   expect_failures = [var.allowed_actions]
 }
+
+run "s3_is_limited_to_named_buckets" {
+  command = plan
+
+  variables {
+    s3_bucket_arns = ["arn:aws:s3:::harbor-goods-tfstate-111122223333"]
+  }
+
+  assert {
+    condition = anytrue([
+      for s in data.aws_iam_policy_document.boundary.statement :
+      s.sid == "AllowNamedBuckets" && toset(s.resources) == toset(["arn:aws:s3:::harbor-goods-tfstate-111122223333", "arn:aws:s3:::harbor-goods-tfstate-111122223333/*"])
+    ])
+    error_message = "S3 actions must be scoped to the named buckets and their objects."
+  }
+
+  assert {
+    condition     = !anytrue([for s in data.aws_iam_policy_document.boundary.statement : anytrue([for a in coalesce(s.actions, []) : a == "s3:*" || (startswith(a, "s3:") && s.sid != "AllowNamedBuckets")]) if s.effect != "Deny"])
+    error_message = "No allow statement may grant s3:* or S3 actions outside the named buckets."
+  }
+}
+
+run "rejects_s3_in_allowed_actions" {
+  command = plan
+
+  variables {
+    allowed_actions = ["ecs:*", "s3:*"]
+  }
+
+  expect_failures = [var.allowed_actions]
+}
+
+run "rejects_wildcard_bucket" {
+  command = plan
+
+  variables {
+    s3_bucket_arns = ["arn:aws:s3:::*"]
+  }
+
+  expect_failures = [var.s3_bucket_arns]
+}
