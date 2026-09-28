@@ -8,7 +8,7 @@ output "arn" {
   value       = aws_s3_bucket.this.arn
 }
 
-output "encryption" {
-  description = "Server-side encryption mode applied to the bucket: aws:kms or AES256."
-  value       = local.use_kms ? "aws:kms" : "AES256"
+output "kms_key_arn" {
+  description = "KMS key that encrypts the bucket."
+  value       = one(one(aws_s3_bucket_server_side_encryption_configuration.kms.rule).apply_server_side_encryption_by_default).kms_master_key_id
 }

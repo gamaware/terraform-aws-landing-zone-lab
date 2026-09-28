@@ -1,8 +1,10 @@
 # Log archive module
 
 Runs in the log-archive account. Creates the KMS key and the central bucket that receive the organization CloudTrail and
-every account's AWS Config delivery, plus the access-log bucket. Service writes are pinned to the management account's
-trail and to the organization ID; object deletion is denied to everyone except the management access role.
+every account's AWS Config delivery. The organization trail records reads of the bucket as S3 data events
+([ADR 0007](../../docs/adr/0007-s3-data-events-instead-of-server-access-logs.md)). Service writes are pinned to the
+management account's trail and to the organization ID; object deletion is denied to everyone except the management
+access role.
 
 Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/) (`terraform test`, mocked provider).
 
@@ -24,7 +26,6 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
-| access\_logs | ../secure-bucket | n/a |
 | logs | ../secure-bucket | n/a |
 
 ## Resources
@@ -34,7 +35,6 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 | [aws_kms_alias.logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
 | [aws_kms_key.logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.access_logs_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.logs_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
@@ -44,10 +44,9 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| bucket\_name | Name of the central log bucket. The access-log bucket takes the same name with an -access suffix. | `string` | n/a | yes |
+| bucket\_name | Name of the central log bucket. | `string` | n/a | yes |
 | management\_account\_id | Management account that owns the organization trail. | `string` | n/a | yes |
 | organization\_id | AWS Organizations ID, for example o-exampleorgid. Scopes AWS Config writes and auditor reads to the organization. | `string` | n/a | yes |
-| access\_log\_expiration\_days | Days S3 server access logs are kept. | `number` | `180` | no |
 | deny\_object\_deletion | Deny object deletion and bucket policy, versioning and lifecycle changes to everyone except the management access role. Only the live test turns this off. | `bool` | `true` | no |
 | force\_destroy | Allow Terraform to delete non-empty buckets. Only the live test sets this to true. | `bool` | `false` | no |
 | glacier\_transition\_days | Days before log objects move to S3 Glacier Flexible Retrieval. | `number` | `90` | no |
@@ -62,7 +61,6 @@ Usage: [examples/basic](examples/basic/main.tf). Offline tests: [tests/](tests/)
 
 | Name | Description |
 | ---- | ----------- |
-| access\_log\_bucket\_name | Bucket that stores S3 server access logs for the central log bucket. |
 | bucket\_arn | Central log bucket ARN. |
 | bucket\_name | Central log bucket name, used by the organization trail and every AWS Config delivery channel. |
 | kms\_key\_arn | KMS key that encrypts the log archive. |

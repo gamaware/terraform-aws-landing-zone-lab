@@ -1,6 +1,8 @@
 # Central log archive in the log-archive account: one KMS key and one bucket
 # that receive the organization CloudTrail and every account's AWS Config
-# delivery channel, plus the access-log bucket that audits reads of both.
+# delivery channel. Reads and writes of the bucket are recorded as CloudTrail
+# S3 data events by the organization trail (ADR 0007), not as S3 server access
+# logs, whose target bucket cannot use SSE-KMS.
 
 data "aws_caller_identity" "current" {}
 
@@ -122,37 +124,6 @@ resource "aws_kms_alias" "logs" {
   target_key_id = aws_kms_key.logs.key_id
 }
 
-module "access_logs" {
-  source = "../secure-bucket"
-
-  name                               = "${var.bucket_name}-access"
-  sse_algorithm                      = "AES256"
-  expiration_days                    = var.access_log_expiration_days
-  noncurrent_version_expiration_days = 30
-  additional_policy_json             = data.aws_iam_policy_document.access_logs_write.json
-  force_destroy                      = var.force_destroy
-  tags                               = var.tags
-}
-
-data "aws_iam_policy_document" "access_logs_write" {
-  statement {
-    sid       = "S3ServerAccessLogsWrite"
-    actions   = ["s3:PutObject"]
-    resources = ["arn:${local.partition}:s3:::${var.bucket_name}-access/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["logging.s3.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [local.account_id]
-    }
-  }
-}
-
 data "aws_iam_policy_document" "logs_write" {
   statement {
     sid       = "CloudTrailAclCheck"
@@ -272,14 +243,10 @@ module "logs" {
 
   name                               = var.bucket_name
   kms_key_arn                        = aws_kms_key.logs.arn
-  access_log_bucket                  = "${var.bucket_name}-access"
   additional_policy_json             = data.aws_iam_policy_document.logs_write.json
   glacier_transition_days            = var.glacier_transition_days
   expiration_days                    = var.log_expiration_days
   noncurrent_version_expiration_days = 30
   force_destroy                      = var.force_destroy
   tags                               = var.tags
-
-  # The access-log target must exist before logging points at it.
-  depends_on = [module.access_logs]
 }

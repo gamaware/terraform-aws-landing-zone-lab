@@ -8,32 +8,14 @@ variable "name" {
   }
 }
 
-variable "sse_algorithm" {
-  description = "aws:kms (default) or AES256. Use AES256 only for an S3 server access log target, which cannot use SSE-KMS."
-  type        = string
-  default     = "aws:kms"
-
-  validation {
-    condition     = contains(["aws:kms", "AES256"], var.sse_algorithm)
-    error_message = "sse_algorithm must be aws:kms or AES256."
-  }
-}
-
 variable "kms_key_arn" {
-  description = "KMS key used when sse_algorithm is aws:kms."
+  description = "Customer managed KMS key that encrypts every object (SSE-KMS with a bucket key)."
   type        = string
-  default     = null
 
   validation {
-    condition     = var.sse_algorithm != "aws:kms" || var.kms_key_arn != null
-    error_message = "kms_key_arn is required when sse_algorithm is aws:kms."
+    condition     = can(regex("^arn:aws[a-z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/", var.kms_key_arn))
+    error_message = "kms_key_arn must be a KMS key ARN."
   }
-}
-
-variable "access_log_bucket" {
-  description = "Bucket that receives S3 server access logs. Pass a name known at plan time, not another resource's id. Null only for the access-log bucket itself."
-  type        = string
-  default     = null
 }
 
 variable "additional_policy_json" {

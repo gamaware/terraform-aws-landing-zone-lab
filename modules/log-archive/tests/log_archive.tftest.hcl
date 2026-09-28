@@ -50,8 +50,8 @@ run "archive_is_encrypted_and_scoped" {
   }
 
   assert {
-    condition     = module.logs.encryption == "aws:kms" && module.access_logs.encryption == "AES256"
-    error_message = "Logs use SSE-KMS; the access-log target uses SSE-S3."
+    condition     = module.logs.kms_key_arn == aws_kms_key.logs.arn
+    error_message = "The log bucket is encrypted with the log-archive customer managed key."
   }
 
   assert {

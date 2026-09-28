@@ -34,43 +34,10 @@ resource "aws_kms_alias" "state" {
   target_key_id = aws_kms_key.state.key_id
 }
 
-data "aws_iam_policy_document" "access_logs_write" {
-  statement {
-    sid       = "S3ServerAccessLogsWrite"
-    actions   = ["s3:PutObject"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.state_bucket_name}-access/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["logging.s3.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-  }
-}
-
-module "access_logs" {
-  source = "../modules/secure-bucket"
-
-  name                               = "${var.state_bucket_name}-access"
-  sse_algorithm                      = "AES256"
-  additional_policy_json             = data.aws_iam_policy_document.access_logs_write.json
-  expiration_days                    = 180
-  noncurrent_version_expiration_days = 30
-}
-
 module "state" {
   source = "../modules/secure-bucket"
 
   name                               = var.state_bucket_name
   kms_key_arn                        = aws_kms_key.state.arn
-  access_log_bucket                  = "${var.state_bucket_name}-access"
   noncurrent_version_expiration_days = 365
-
-  # The access-log target must exist before logging points at it.
-  depends_on = [module.access_logs]
 }

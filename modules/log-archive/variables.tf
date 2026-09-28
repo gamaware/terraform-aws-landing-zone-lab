@@ -1,5 +1,5 @@
 variable "bucket_name" {
-  description = "Name of the central log bucket. The access-log bucket takes the same name with an -access suffix."
+  description = "Name of the central log bucket."
   type        = string
 }
 
@@ -69,11 +69,6 @@ variable "log_expiration_days" {
   }
 }
 
-variable "access_log_expiration_days" {
-  description = "Days S3 server access logs are kept."
-  type        = number
-  default     = 180
-}
 
 variable "kms_deletion_window_days" {
   description = "Waiting period before a deleted log key is gone. Logs are unreadable without it, so keep the maximum outside tests."

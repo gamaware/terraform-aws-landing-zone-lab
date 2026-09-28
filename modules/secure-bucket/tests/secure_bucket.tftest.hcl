@@ -16,34 +16,31 @@ mock_provider "aws" {
   }
 }
 
-run "kms_bucket_with_access_logging" {
+variables {
+  name        = "harbor-goods-example"
+  kms_key_arn = "arn:aws:kms:us-east-1:444455556666:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+}
+
+run "kms_bucket_is_hardened" {
   command = plan
 
   variables {
-    name              = "harbor-goods-example"
-    kms_key_arn       = "arn:aws:kms:us-east-1:444455556666:key/1234abcd-12ab-34cd-56ef-1234567890ab"
-    access_log_bucket = "harbor-goods-example-access"
-    expiration_days   = 400
+    expiration_days = 400
   }
 
   assert {
-    condition     = length(aws_s3_bucket_server_side_encryption_configuration.kms) == 1 && length(aws_s3_bucket_server_side_encryption_configuration.s3_managed) == 0
-    error_message = "A KMS key must select SSE-KMS only."
-  }
-
-  assert {
-    condition     = one(one(aws_s3_bucket_server_side_encryption_configuration.kms[0].rule).apply_server_side_encryption_by_default).sse_algorithm == "aws:kms"
+    condition     = one(one(aws_s3_bucket_server_side_encryption_configuration.kms.rule).apply_server_side_encryption_by_default).sse_algorithm == "aws:kms"
     error_message = "SSE-KMS must be the default encryption."
   }
 
   assert {
-    condition     = one(aws_s3_bucket_server_side_encryption_configuration.kms[0].rule).bucket_key_enabled
-    error_message = "Bucket keys cut KMS request cost and must be on."
+    condition     = one(one(aws_s3_bucket_server_side_encryption_configuration.kms.rule).apply_server_side_encryption_by_default).kms_master_key_id == var.kms_key_arn
+    error_message = "Objects must be encrypted with the given customer managed key."
   }
 
   assert {
-    condition     = aws_s3_bucket_logging.this[0].target_bucket == "harbor-goods-example-access"
-    error_message = "Access logs must go to the given bucket."
+    condition     = one(aws_s3_bucket_server_side_encryption_configuration.kms.rule).bucket_key_enabled
+    error_message = "Bucket keys cut KMS request cost and must be on."
   }
 
   assert {
@@ -84,29 +81,10 @@ run "kms_bucket_with_access_logging" {
     error_message = "The bucket policy must deny requests without TLS."
   }
 
-  assert {
-    condition     = output.encryption == "aws:kms"
-    error_message = "The encryption output must report SSE-KMS."
-  }
 }
 
-run "access_log_target_uses_sse_s3" {
+run "no_expiration_by_default" {
   command = plan
-
-  variables {
-    name          = "harbor-goods-example-access"
-    sse_algorithm = "AES256"
-  }
-
-  assert {
-    condition     = length(aws_s3_bucket_server_side_encryption_configuration.s3_managed) == 1 && length(aws_s3_bucket_server_side_encryption_configuration.kms) == 0
-    error_message = "Without a KMS key the bucket must use SSE-S3, the only option for access-log targets."
-  }
-
-  assert {
-    condition     = length(aws_s3_bucket_logging.this) == 0
-    error_message = "The access-log target must not log to itself."
-  }
 
   assert {
     condition     = length(one(aws_s3_bucket_lifecycle_configuration.this.rule).expiration) == 0
@@ -114,11 +92,11 @@ run "access_log_target_uses_sse_s3" {
   }
 }
 
-run "rejects_kms_without_key" {
+run "rejects_a_value_that_is_not_a_kms_key" {
   command = plan
 
   variables {
-    name = "harbor-goods-example"
+    kms_key_arn = "AES256"
   }
 
   expect_failures = [var.kms_key_arn]
@@ -128,8 +106,7 @@ run "rejects_invalid_bucket_name" {
   command = plan
 
   variables {
-    name          = "Harbor_Goods"
-    sse_algorithm = "AES256"
+    name = "Harbor_Goods"
   }
 
   expect_failures = [var.name]
