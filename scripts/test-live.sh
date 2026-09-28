@@ -7,6 +7,9 @@
 # trail are out of scope on purpose: closing an account takes 90 days, and
 # org-level changes affect every account. Those are covered offline only.
 #
+# Live tests run private-only: the plan is saved first, and scripts/check_private_plan.py refuses
+# it if anything would be internet-facing. Only the checked plan is applied.
+#
 # Usage: CONFIRM_LIVE=yes LIVE_ACCOUNT_ID=<sandbox account id> make test-live
 set -euo pipefail
 
@@ -117,7 +120,10 @@ trap cleanup EXIT
 
 echo "==> Applying (run $SUFFIX)"
 terraform -chdir="$LIVE_DIR" init -input=false -backend-config="path=$WORK_DIR/terraform.tfstate" >/dev/null
-terraform -chdir="$LIVE_DIR" apply -auto-approve -input=false "${TF_ARGS[@]}"
+terraform -chdir="$LIVE_DIR" plan -input=false -out="$WORK_DIR/live.tfplan" "${TF_ARGS[@]}" >/dev/null
+terraform -chdir="$LIVE_DIR" show -json "$WORK_DIR/live.tfplan" >"$WORK_DIR/live-plan.json"
+"$ROOT_DIR/scripts/check_private_plan.py" "$WORK_DIR/live-plan.json"
+terraform -chdir="$LIVE_DIR" apply -input=false "$WORK_DIR/live.tfplan"
 
 BUCKET="$(terraform -chdir="$LIVE_DIR" output -raw log_bucket_name)"
 ACCESS_BUCKET="$BUCKET-access"
