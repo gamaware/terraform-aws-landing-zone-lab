@@ -45,6 +45,7 @@ jobs:
       contents: read # checkout
     with:
       terraform-version: "1.14.5"
+      tflint-version: v0.61.0
       working-directories: >-
         [
           "bootstrap",
