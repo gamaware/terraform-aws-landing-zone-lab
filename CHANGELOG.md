@@ -22,9 +22,14 @@ All notable changes to this project are documented in this file. The format foll
   test, tflint, Checkov and an example-account-ID guard, all behind `make verify`.
 - OpenSSF Scorecard and a weekly pre-commit hook update workflow.
 - Opt-in `make test-live` for non-organization modules, guarded by `CONFIRM_LIVE=yes`.
-- Six ADRs, a deployment runbook and architecture diagrams.
+- Seven ADRs, a deployment runbook and architecture diagrams.
 
 ### Security
+
+- Every bucket uses SSE-KMS with a customer managed key; the SSE-S3 access-log buckets are gone, and the
+  organization trail records S3 data events for log-archive reads and Terraform state access instead (ADR 0007).
+- The pipeline permissions boundary no longer allows `s3:*`: S3 object and listing actions are limited to the buckets
+  in `s3_bucket_arns`.
 
 - Every action and shared `gamaware/.github` reusable workflow is pinned to a full commit SHA; `zizmor.yml` enforces
   hash pins for all of them.

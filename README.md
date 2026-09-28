@@ -32,7 +32,7 @@ offline verification.
 | [`policies/scp/`](policies/scp/) and [`tests/policies/test_scps.py`](tests/policies/test_scps.py) | The guardrails and the requests each one must deny or allow |
 | [`modules/organization/`](modules/organization/main.tf) | OUs, accounts with `prevent_destroy`, SCP attachments, delegated administrators |
 | [`modules/log-archive/`](modules/log-archive/main.tf) | Bucket and key policies pinned to the trail ARN and organization ID |
-| [`modules/pipeline-role/`](modules/pipeline-role/main.tf) | OIDC trust with exact subjects and a boundary that scopes `iam:PassRole` |
+| [`modules/pipeline-role/`](modules/pipeline-role/main.tf) | OIDC trust with exact subjects and a boundary that scopes `iam:PassRole` and S3 to named resources |
 | [`environments/`](environments/) | The thin roots, one per account, region and stack |
 | [`docs/runbook.md`](docs/runbook.md) | First deployment in order, with checkpoints and acceptance criteria |
 | [`docs/adr/`](docs/adr/README.md) | Why raw Organizations instead of Control Tower, and five other decisions |
@@ -117,7 +117,7 @@ OK
 ...
 Ran 3 tests in 0.004s
 OK
-Passed checks: 397, Failed checks: 0, Skipped checks: 54
+Passed checks: 327, Failed checks: 0, Skipped checks: 48
 Only example account IDs found.
 verify: all checks passed
 ```
@@ -177,6 +177,7 @@ Architecture decision records follow the *Fundamentals of Software Architecture*
 | [0004](docs/adr/0004-single-home-region.md) | One home region, a second approved region | Accepted |
 | [0005](docs/adr/0005-offline-verification-and-live-scope.md) | Offline verification by default, a narrow live test | Accepted |
 | [0006](docs/adr/0006-delegated-administration.md) | Security tooling runs from a delegated administrator account | Accepted |
+| [0007](docs/adr/0007-s3-data-events-instead-of-server-access-logs.md) | S3 data events instead of S3 server access logs | Accepted |
 
 Clients seeking AWS management of the landing zone lifecycle or access to its control library can use AWS Control
 Tower, the managed alternative. ADR 0001 documents this lab's choice to work directly with Organizations and the

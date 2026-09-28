@@ -10,3 +10,4 @@ Architecture decision records follow the *Fundamentals of Software Architecture*
 | [0004](0004-single-home-region.md) | One home region, a second approved region | Accepted |
 | [0005](0005-offline-verification-and-live-scope.md) | Offline verification by default, a narrow live test | Accepted |
 | [0006](0006-delegated-administration.md) | Security tooling runs from a delegated administrator account | Accepted |
+| [0007](0007-s3-data-events-instead-of-server-access-logs.md) | S3 data events instead of S3 server access logs | Accepted |
