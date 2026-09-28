@@ -12,12 +12,12 @@ EXAMPLES := $(sort $(patsubst %/versions.tf,%,$(wildcard modules/*/examples/*/ve
 TFLINT_CONFIG := $(CURDIR)/.tflint.hcl
 CHECKOV_VERSION := 3.3.19
 
-.PHONY: help verify fmt init validate lint test policy-test structure-test checkov example-ids test-live clean
+.PHONY: help verify fmt init validate lint test policy-test structure-test private-live-test checkov example-ids test-live clean
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
 
-verify: fmt validate lint test policy-test structure-test checkov example-ids ## Run every offline check
+verify: fmt validate lint test policy-test structure-test private-live-test checkov example-ids ## Run every offline check
 	@echo "verify: all checks passed"
 
 fmt: ## Check Terraform formatting
@@ -41,8 +41,8 @@ lint: ## Run tflint on every root, module and example
 	done
 	@echo "tflint: clean"
 
-test: ## Run terraform test (mocked provider) in every module
-	@for dir in $(MODULES); do \
+test: ## Run terraform test (mocked provider) in every module and the live-test root
+	@for dir in $(MODULES) tests/live; do \
 	  terraform -chdir="$$dir" init -backend=false -input=false -no-color >/dev/null || { echo "init failed: $$dir"; exit 1; }; \
 	  out=$$(terraform -chdir="$$dir" test -no-color 2>&1) || { echo "$$out"; exit 1; }; \
 	  printf '%-32s %s\n' "$$dir" "$$(echo "$$out" | tail -1)"; \
@@ -53,6 +53,9 @@ policy-test: ## Validate SCP JSON and assert which requests each SCP denies
 
 structure-test: ## Assert each root's backend key matches its path and is unique
 	python3 -m unittest discover -s tests/structure -v
+
+private-live-test: ## Assert the live-test plan check refuses internet-facing resources
+	python3 -m unittest discover -s tests/private_live -v
 
 checkov: ## Scan all Terraform with Checkov
 	uvx checkov==$(CHECKOV_VERSION) --config-file .checkov.yaml
