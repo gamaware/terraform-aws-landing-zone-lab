@@ -105,8 +105,8 @@ run "delegates_security_services_to_the_security_account" {
   command = plan
 
   assert {
-    condition     = aws_guardduty_detector.management.enable && aws_securityhub_account.management.enable_default_standards == false
-    error_message = "GuardDuty and Security Hub must be on in the management account before delegation."
+    condition     = aws_guardduty_detector.management.enable && aws_securityhub_account.management.enable_default_standards
+    error_message = "GuardDuty and Security Hub (with default standards) must be on in the management account before delegation."
   }
 
   assert {

@@ -60,6 +60,14 @@ run "organization_wide_detection" {
     condition     = aws_iam_role_policy_attachment.config_aggregator.policy_arn == "arn:aws:iam::aws:policy/service-role/AWSConfigRoleForOrganizations"
     error_message = "The aggregator role needs the AWS managed organizations policy."
   }
+
+  assert {
+    condition = anytrue([
+      for c in one(data.aws_iam_policy_document.config_assume.statement).condition :
+      c.test == "StringEquals" && c.variable == "aws:SourceAccount" && toset(c.values) == toset(["777788889999"])
+    ])
+    error_message = "The aggregator role must trust AWS Config only on behalf of the security account."
+  }
 }
 
 run "rejects_unknown_frequency" {

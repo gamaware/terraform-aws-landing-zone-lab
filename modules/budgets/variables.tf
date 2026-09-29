@@ -22,6 +22,11 @@ variable "budgets" {
     condition     = alltrue([for b in values(var.budgets) : alltrue([for t in b.actual_thresholds : t > 0 && t <= 200])])
     error_message = "Thresholds are percentages between 1 and 200."
   }
+
+  validation {
+    condition     = alltrue([for b in values(var.budgets) : b.forecast_threshold > 0 && b.forecast_threshold <= 200])
+    error_message = "forecast_threshold is a percentage between 1 and 200."
+  }
 }
 
 variable "subscriber_emails" {
