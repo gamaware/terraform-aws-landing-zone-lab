@@ -14,25 +14,25 @@ concurrency:
 jobs:
   lint-docs:
     name: lint-docs
-    uses: gamaware/.github/.github/workflows/lint-docs.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    uses: gamaware/.github/.github/workflows/lint-docs.yml@01271d87e89c5f893e1e3a92eb6ba4d484286514 # main (01271d8)
     permissions:
       contents: read # checkout
 
   lint-actions:
     name: lint-actions
-    uses: gamaware/.github/.github/workflows/lint-actions.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    uses: gamaware/.github/.github/workflows/lint-actions.yml@01271d87e89c5f893e1e3a92eb6ba4d484286514 # main (01271d8)
     permissions:
       contents: read # checkout
 
   secrets:
     name: secrets
-    uses: gamaware/.github/.github/workflows/secrets.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    uses: gamaware/.github/.github/workflows/secrets.yml@01271d87e89c5f893e1e3a92eb6ba4d484286514 # main (01271d8)
     permissions:
       contents: read # checkout
 
   security:
     name: security
-    uses: gamaware/.github/.github/workflows/security.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    uses: gamaware/.github/.github/workflows/security.yml@01271d87e89c5f893e1e3a92eb6ba4d484286514 # main (01271d8)
     permissions:
       contents: read # checkout
     with:
@@ -40,7 +40,7 @@ jobs:
 
   terraform:
     name: terraform
-    uses: gamaware/.github/.github/workflows/terraform.yml@1e2fe2d99f7772ad59b896f332557457ebcbdde9
+    uses: gamaware/.github/.github/workflows/terraform.yml@01271d87e89c5f893e1e3a92eb6ba4d484286514 # main (01271d8)
     permissions:
       contents: read # checkout
     with:

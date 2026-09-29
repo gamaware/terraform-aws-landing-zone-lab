@@ -78,6 +78,8 @@ see [Limits](#limits-and-production-adaptations).
 
 ## Architecture
 
+![Animated flow: organization, guardrails, central logs and access](docs/diagrams/architecture-animated.svg)
+
 ![Context: people and GitHub Actions reach the Harbor Goods organization through Identity Center and OIDC](docs/diagrams/context.png)
 
 From the management account, the platform team applies Terraform to establish the organization, accounts, SCPs and
