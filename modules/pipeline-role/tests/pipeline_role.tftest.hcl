@@ -238,3 +238,23 @@ run "rejects_iam_action_wildcard" {
 
   expect_failures = [var.allowed_actions]
 }
+
+run "rejects_iam_single_character_wildcard" {
+  command = plan
+
+  variables {
+    allowed_actions = ["ecs:*", "iam:???????????????"]
+  }
+
+  expect_failures = [var.allowed_actions]
+}
+
+run "rejects_wildcard_in_service_prefix" {
+  command = plan
+
+  variables {
+    allowed_actions = ["ecs:*", "?am:PassRole"]
+  }
+
+  expect_failures = [var.allowed_actions]
+}
