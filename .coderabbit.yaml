@@ -6,7 +6,7 @@ reviews:
   path_instructions:
     - path: "modules/**/*.tf"
       instructions: >-
-        Reusable modules. Check least privilege in IAM, KMS and bucket policies, that every
+        Reusable modules. Check that IAM, KMS and bucket policies grant only the access needed, that every
         input has a description, type and validation where a wrong value is dangerous, and
         that behavior changes come with a matching assertion in tests/*.tftest.hcl.
     - path: "environments/**"

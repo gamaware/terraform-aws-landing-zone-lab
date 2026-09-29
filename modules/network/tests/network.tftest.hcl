@@ -126,3 +126,13 @@ run "rejects_single_az" {
 
   expect_failures = [var.availability_zones]
 }
+
+run "rejects_ipv6_cidr" {
+  command = plan
+
+  variables {
+    cidr_block = "2001:db8::/16"
+  }
+
+  expect_failures = [var.cidr_block]
+}

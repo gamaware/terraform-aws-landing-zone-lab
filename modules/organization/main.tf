@@ -98,8 +98,10 @@ resource "aws_guardduty_detector" "management" {
   tags   = var.tags
 }
 
+# The organization configuration auto-enables standards for member accounts
+# only, so the management account subscribes to the default standards itself.
 resource "aws_securityhub_account" "management" {
-  enable_default_standards = false
+  enable_default_standards = true
 }
 
 resource "aws_organizations_delegated_administrator" "config" {
