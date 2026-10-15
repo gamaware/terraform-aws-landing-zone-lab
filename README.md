@@ -217,9 +217,7 @@ SHAs, and CI has neither AWS credentials nor `id-token` permission.
 
 ## Related work
 
-This repository belongs to the [AWS DevOps portfolio](https://github.com/gamaware/aws-devops-portfolio) and supports
-the service [AWS landing zone for a new project on Upwork](https://www.upwork.com/freelancers/~014b3520cf9e140103).
-The method is the one Alex uses in audits for ITESO and freelance clients in Guadalajara.
+This repository belongs to the [AWS DevOps portfolio](https://github.com/gamaware/aws-devops-portfolio).
 
 ## License
 
